@@ -48,10 +48,13 @@ ComfyUI のカスタムノード。ONNX (FP16 + CUDA) で `wd-eva02-large-tagger
 
 ## モデルファイル
 
-ノードは初回実行時に以下を **自動でダウンロード + FP16 変換** する:
+ノードは初回実行時に以下を **自動でダウンロード** する。FP32 モデルの取得やローカルでの FP16 変換は不要:
 
-- `wd-eva02-large-tagger-v3-fp16.onnx` (FP16, 約 600 MB)
+- `wd-eva02-large-tagger-v3-fp16.onnx` (FP16, 約 632 MB)
 - `wd-eva02-large-tagger-v3.csv` (タグ定義)
+
+配布元: [sugarknight/wd-eva02-large-tagger-v3-fp16](https://huggingface.co/sugarknight/wd-eva02-large-tagger-v3-fp16/tree/v1.0.0)
+の `v1.0.0`。配布元の `selected_tags.csv` は上記のファイル名で保存する。
 
 保存先の優先順位:
 
@@ -59,6 +62,9 @@ ComfyUI のカスタムノード。ONNX (FP16 + CUDA) で `wd-eva02-large-tagger
 2. このパッケージ直下の `models/`
 
 既に上記のいずれかに FP16 ONNX が置かれていればそれを使う。
+
+将来、FP16 モデルを再配布できない場合に備え、FP32 からの変換コードと依存パッケージは残している。
+`tagger_core.py` の `HF_FP16_URL` を `None` に設定した場合は、従来の FP32 ダウンロード・変換経路を使う。
 
 ## インストール
 

@@ -1,7 +1,7 @@
 [project]
 name = "comfyui-onnxtagger"
 description = "ONNX (FP16 + CUDA) で wd-eva02-large-tagger-v3 を呼び、タグ文字列と検閲状態 4 値 (uncensored / censored / no_explicit / unknown) を同時に返す ComfyUI ノード。"
-version = "1.0.1"
+version = "1.0.2"
 license = { file = "LICENSE" }
 dependencies = [
     "onnxruntime-gpu>=1.27,<2 ; sys_platform != 'darwin'",

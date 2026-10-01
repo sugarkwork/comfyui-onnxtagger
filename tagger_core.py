@@ -8,7 +8,7 @@ ONNX 推論 + 検閲判定のコア部分。ComfyUI ノードから呼ばれる�
 モデル探索順:
     1. ComfyUI の `models/wd14_tagger/` (folder_paths から取得)
     2. このパッケージ直下の `models/` フォルダ
-    3. 上記のいずれにも無ければ HuggingFace から FP32 を落として FP16 化
+    3. 上記のいずれにも無ければ HuggingFace から FP16 モデルを取得
 """
 from __future__ import annotations
 
@@ -46,8 +46,10 @@ GENITAL_TAGS: tuple[str, ...] = ("pussy", "penis")
 
 MODEL_BASENAME = "wd-eva02-large-tagger-v3-fp16.onnx"
 CSV_BASENAME = "wd-eva02-large-tagger-v3.csv"
-HF_BASE = "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/main"
-HF_ONNX_URL = f"{HF_BASE}/model.onnx?download=true"
+HF_BASE = "https://huggingface.co/sugarknight/wd-eva02-large-tagger-v3-fp16/resolve/v1.0.0"
+# FP16 を再配布できないモデルでは None にして、下の FP32 変換経路を使う。
+HF_FP16_URL: str | None = f"{HF_BASE}/{MODEL_BASENAME}?download=true"
+HF_ONNX_URL = "https://huggingface.co/SmilingWolf/wd-eva02-large-tagger-v3/resolve/main/model.onnx?download=true"
 HF_CSV_URL = f"{HF_BASE}/selected_tags.csv?download=true"
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -130,6 +132,9 @@ def _ensure_fp16_model(target_dir: Path) -> tuple[Path, Path]:
     if not csv_path.exists():
         _download(HF_CSV_URL, csv_path, label="selected_tags.csv")
 
+    if not fp16.exists() and HF_FP16_URL is not None:
+        _download(HF_FP16_URL, fp16, label="model.onnx (FP16, 約 632 MB)")
+
     if not fp16.exists():
         # FP32 を一旦落として FP16 に変換
         try:
@@ -166,7 +171,7 @@ def _ensure_fp16_model(target_dir: Path) -> tuple[Path, Path]:
 
 
 def resolve_model_paths(prefer_dir: Path | str | None = None) -> tuple[Path, Path]:
-    """FP16 ONNX と CSV のパスを解決する。無ければダウンロード + 変換する。
+    """FP16 ONNX と CSV のパスを解決する。無ければダウンロードする。
 
     探索順:
         1. prefer_dir (引数で指定)
