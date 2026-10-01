@@ -13,7 +13,6 @@ ONNX 推論 + 検閲判定のコア部分。ComfyUI ノードから呼ばれる�
 from __future__ import annotations
 
 import csv
-import os
 import sys
 import time
 import urllib.request
@@ -22,60 +21,15 @@ from pathlib import Path
 from typing import Iterable, Literal
 
 import numpy as np
+import torch
+import onnxruntime as ort
 from PIL import Image
 
 
-# ---- CUDA libs プリロード (pip wheel のものを LD_LIBRARY_PATH/PATH 設定なしで読む) ----
-def _preload_cuda_libs() -> None:
-    try:
-        import site
-        bases: list[str] = []
-        for b in [*site.getsitepackages(), site.getusersitepackages()]:
-            if b and b not in bases:
-                bases.append(b)
-    except Exception:
-        return
-
-    if sys.platform == "win32":
-        for base in bases:
-            for sub in ("nvidia/cuda_runtime/bin", "nvidia/cublas/bin", "nvidia/cudnn/bin"):
-                d = os.path.join(base, sub)
-                if os.path.isdir(d):
-                    try:
-                        os.add_dll_directory(d)
-                    except (OSError, AttributeError):
-                        pass
-        return
-
-    if sys.platform.startswith("linux"):
-        try:
-            import ctypes
-            search_dirs: list[str] = []
-            for base in bases:
-                for sub in ("nvidia/cuda_runtime/lib", "nvidia/cublas/lib", "nvidia/cudnn/lib"):
-                    d = os.path.join(base, sub)
-                    if os.path.isdir(d):
-                        search_dirs.append(d)
-            priority = ["libcudart", "libnvrtc", "libcublasLt", "libcublas", "libcudnn"]
-            loaded: set[str] = set()
-            for prefix in priority:
-                for d in search_dirs:
-                    for f in sorted(os.listdir(d)):
-                        if not f.startswith(prefix) or f in loaded:
-                            continue
-                        if ".so" not in f:
-                            continue
-                        try:
-                            ctypes.CDLL(os.path.join(d, f), mode=ctypes.RTLD_GLOBAL)
-                            loaded.add(f)
-                        except OSError:
-                            pass
-        except Exception:
-            pass
-
-
-_preload_cuda_libs()
-import onnxruntime as ort  # noqa: E402
+if sys.platform == "win32":
+    ort.preload_dlls(directory=str(Path(torch.__file__).resolve().parent / "lib"))
+elif sys.platform.startswith("linux"):
+    ort.preload_dlls()
 
 
 # ---- 検閲判定に使うタグ ----

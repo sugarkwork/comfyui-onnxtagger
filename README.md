@@ -74,14 +74,10 @@ ComfyUI/custom_nodes/comfyui-onnxtagger/
 pip install -r requirements.txt
 ```
 
-`onnxruntime-gpu` 用に CUDA 12 / cuDNN 9 が必要。pip wheel で揃うので OS 側へのインストールは不要:
-
-- Linux: `nvidia-cudnn-cu12`, `nvidia-cuda-runtime-cu12`, `nvidia-cublas-cu12` を pip で入れる
-- Windows: 同上 (Windows wheel は DLL を提供)
-
-`tagger_core.py` が import 時に `os.add_dll_directory()` (Windows) / `ctypes.CDLL` プリロード (Linux)
-で pip wheel 版 CUDA libs を自動的に検索パスに加えるので、`LD_LIBRARY_PATH` / `PATH` を
-手動でいじる必要は通常ない。
+ONNX Runtime 1.27以降の標準GPUパッケージはCUDA 13 / cuDNN 9を使用します。
+CUDA 13版PyTorchと組み合わせ、`tagger_core.py` は `onnxruntime.preload_dlls()` で
+PyTorchのライブラリを共有します。WindowsではPyTorchの `lib` フォルダを指定します。
+異なるcuDNNのDLLが混在するため、CUDA 12用NVIDIAパッケージの追加は不要です。
 
 ## ファイル構成
 
